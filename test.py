@@ -25,7 +25,7 @@ with open(MANIFEST_FILE, 'w') as fp:
 
 
 OUTPUT_DIR = os.getcwd()
-MODEL_CONFIG = '/PATH/TO/CONFIG_FILE.yaml'
+MODEL_CONFIG = "config.yaml"
 
 config = OmegaConf.load(MODEL_CONFIG)
 config.diarizer.manifest_filepath = MANIFEST_FILE
