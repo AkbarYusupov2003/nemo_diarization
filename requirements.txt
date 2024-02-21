@@ -1,2 +1,2 @@
 Cython==3.0.8
-nemo_toolkit['all']
+nemo_toolkit[all]

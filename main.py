@@ -10,3 +10,6 @@ audio_filepath = "data/le.wav"
 # Применение модели к аудиофайлу
 # Это сгенерирует аннотации диаризации в формате RTTM
 model.diarize(paths2audio_files=[audio_filepath])
+
+# Manifest.json
+# Указать спикеров -> num_speakers = None
