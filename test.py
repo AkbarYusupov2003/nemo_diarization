@@ -1,38 +1,37 @@
 import json
-import os
+import torch
+import torchaudio
+import nemo.collections.asr as nemo_asr
 
-from nemo.collections.asr.models import ClusteringDiarizer
-from omegaconf import OmegaConf
-
-
-INPUT_FILE = "data/le.wav"
-MANIFEST_FILE = "MANIFEST_FILE.json"
-
-meta = {
-    "audio_filepath": INPUT_FILE,
-    "offset": 0,
-    "duration": None,
-    "label": "infer",
-    "text": '-',
-    "num_speakers": None,
-    "rttm_filepath": None,
-    "uem_filepath": None
-}
-
-with open(MANIFEST_FILE, 'w') as fp:
-    json.dump(meta, fp)
-    fp.write('\n')
+from sklearn.cluster import KMeans
 
 
-OUTPUT_DIR = os.getcwd()
-MODEL_CONFIG = "config.yaml"
 
-config = OmegaConf.load(MODEL_CONFIG)
-config.diarizer.manifest_filepath = MANIFEST_FILE
-config.diarizer.out_dir = OUTPUT_DIR
-config.diarizer.oracle_vad = False
-config.diarizer.clustering.parameters.oracle_num_speakers = False
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-sd_model = ClusteringDiarizer(cfg=config)
+model = nemo_asr.models.EncDecSpeakerLabelModel.from_pretrained("nvidia/speakerverification_en_titanet_large")
+model.to(device)
 
-sd_model.diarize()
+audio_path = "/home/user/Desktop/projects/nemo_diarization/data/new.wav"
+audio_length = 30.306644
+
+# audio_signal, audio_signal_len = model.preprocessor(input_signal=your_audio_data, length="30.306644")
+# embeddings = model.forward(input_signal=audio_signal, input_signal_length=audio_signal_len)
+# manifest = json.dumps({"audio_filepath": audio_path, "duration": audio_path, "label": "Speaker"})
+
+audio_signal, sample_rate = torchaudio.load(audio_path)
+
+if audio_signal.shape[0] == 2:
+    audio_signal = torch.mean(audio_signal, dim=0, keepdim=True)
+
+if sample_rate != model.preprocessor._sample_rate:
+    resampler = torchaudio.transforms.Resample(orig_freq=sample_rate, new_freq=model.preprocessor._sample_rate)
+    audio_signal = resampler(audio_signal)
+
+if len(audio_signal.shape) == 1:
+    audio_signal = audio_signal.unsqueeze(0)
+
+signal_length = torch.tensor([audio_signal.shape[1]])
+audio_signal = audio_signal.to(device)
+embeddings = model.forward(input_signal=audio_signal, input_signal_length=signal_length)
+print("embeddings", embeddings)
