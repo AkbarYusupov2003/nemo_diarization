@@ -37,18 +37,12 @@ signal_length = signal_length.to(device)
 audio_signal = audio_signal.to(device)
 embeddings = model.forward(input_signal=audio_signal, input_signal_length=signal_length)
 
-# Assuming `embeddings` is your tensor of embeddings from the model
-embeddings_np = embeddings[1].detach().cpu().numpy()  # Convert embeddings to NumPy array
-
-print("++++++++++++++")
-print(embeddings_np.shape)
-print("++++++++++++++")
+embeddings_np = embeddings[1].detach().cpu().numpy()
 
 # Perform K-Means clustering
 n_clusters = 3  # Adjust based on your audio
 kmeans = KMeans(n_clusters=n_clusters, random_state=0).fit(embeddings_np)
 
-# The labels assigned to each embedding
 speaker_labels = kmeans.labels_
 
 timestamps_and_speakers = [(i, speaker_labels[i]) for i in range(len(speaker_labels))]
